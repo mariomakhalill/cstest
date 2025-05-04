@@ -9,11 +9,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ---------------------- Session Storage for News ----------------------
+# ---------------------- Session State for News ----------------------
 if "news_posts" not in st.session_state:
     st.session_state.news_posts = []
 
-# ---------------------- CSS Style ----------------------
+# ---------------------- CSS Styling ----------------------
 st.markdown("""
     <style>
         .main { background-color: #0f1117; color: white; }
@@ -24,6 +24,7 @@ st.markdown("""
             color: white;
             font-weight: bold;
             border-radius: 8px;
+            padding: 10px;
         }
         .stTabs [data-baseweb="tab"] {
             font-size: 16px;
@@ -39,13 +40,13 @@ st.markdown("An interactive platform for tools, threat feeds, awareness, and use
 # ---------------------- Tabs ----------------------
 tabs = st.tabs(["🏠 Home", "🧰 Tools", "📰 Publish News", "📡 Threat Feeds", "ℹ️ About"])
 
-# ---------------------- Home ----------------------
+# ---------------------- Home Tab ----------------------
 with tabs[0]:
     st.subheader("👋 Welcome")
     st.info("Explore the latest cybersecurity resources, tools, and community updates.")
     st.success("💡 Use the tabs to navigate through the portal features.")
 
-# ---------------------- Tools ----------------------
+# ---------------------- Tools Tab ----------------------
 with tabs[1]:
     st.subheader("🧰 Open Source Intelligence Tools")
 
@@ -55,16 +56,22 @@ with tabs[1]:
         st.write("### 🔍 Domain Lookup")
         domain = st.text_input("Enter a domain (e.g., example.com)")
         if st.button("Scan Domain"):
-            st.info(f"Scanned domain: {domain}")
-            st.code("✅ No threats detected in current database.")
+            if domain:
+                st.info(f"Scanned domain: {domain}")
+                st.code("✅ No threats detected in current database.")
+            else:
+                st.warning("Please enter a domain.")
 
     with col2:
         st.write("### 💣 Malware Hash Checker")
         hash_input = st.text_input("Enter file hash (e.g., SHA256)")
         if st.button("Check Hash"):
-            st.warning("⚠️ This hash appears in public threat intel sources.")
+            if hash_input:
+                st.warning("⚠️ This hash appears in public threat intel sources.")
+            else:
+                st.warning("Please enter a hash.")
 
-# ---------------------- News Publisher ----------------------
+# ---------------------- News Publisher Tab ----------------------
 with tabs[2]:
     st.subheader("📰 Publish Cybersecurity News")
 
@@ -76,13 +83,16 @@ with tabs[2]:
 
         submitted = st.form_submit_button("Publish")
         if submitted:
-            st.session_state.news_posts.append({
-                "title": title,
-                "author": author,
-                "content": content,
-                "date": date
-            })
-            st.success("✅ News published successfully!")
+            if title and content:
+                st.session_state.news_posts.append({
+                    "title": title,
+                    "author": author or "Anonymous",
+                    "content": content,
+                    "date": date
+                })
+                st.success("✅ News published successfully!")
+            else:
+                st.error("Title and content are required.")
 
     # Show published posts
     if st.session_state.news_posts:
@@ -94,7 +104,7 @@ with tabs[2]:
             st.markdown(post['content'])
             st.markdown("---")
 
-# ---------------------- Threat Feeds ----------------------
+# ---------------------- Threat Feeds Tab ----------------------
 with tabs[3]:
     st.subheader("📡 Live Threat Feeds (Demo)")
     st.info("Example threat indicators. In future, this section will pull real-time data.")
@@ -104,7 +114,7 @@ with tabs[3]:
         "Source": ["Community Report", "Abuse.ch", "VirusTotal"]
     })
 
-# ---------------------- About ----------------------
+# ---------------------- About Tab ----------------------
 with tabs[4]:
     st.subheader("ℹ️ About This Portal")
     st.markdown("""
@@ -120,5 +130,6 @@ with tabs[4]:
     🔗 [GitHub Repo](https://github.com/yourusername/cybersec-portal)
     """)
 
+# ---------------------- Footer ----------------------
 st.markdown("---")
 st.markdown("© 2025 | CyberSec Portal | Made with ❤️ using Streamlit")
