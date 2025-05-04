@@ -1,23 +1,21 @@
 import streamlit as st
+import hashlib
+import base64
+import re
 from datetime import datetime
 
-# ---------------------- Page Configuration ----------------------
+# ---------------------- Page Config ----------------------
 st.set_page_config(
-    page_title="CyberSec Portal",
+    page_title="Cyber Tools Lab",
     layout="wide",
-    page_icon="🛡️",
+    page_icon="🛠️",
     initial_sidebar_state="expanded"
 )
 
-# ---------------------- Session State for News ----------------------
-if "news_posts" not in st.session_state:
-    st.session_state["news_posts"] = []
-
-# ---------------------- CSS Styling ----------------------
+# ---------------------- Style ----------------------
 st.markdown("""
     <style>
         .main { background-color: #0f1117; color: white; }
-        .block-container { padding: 2rem; }
         h1, h2, h3, h4 { color: #61dafb; }
         .stButton>button {
             background-color: #1f77b4;
@@ -26,112 +24,93 @@ st.markdown("""
             border-radius: 8px;
             padding: 10px;
         }
-        .stTabs [data-baseweb="tab"] {
-            font-size: 16px;
-            padding: 10px;
-        }
     </style>
 """, unsafe_allow_html=True)
 
-# ---------------------- Header ----------------------
-st.markdown("## 🛡️ CyberSecurity Community Portal")
-st.markdown("An interactive platform for tools, threat feeds, awareness, and user contributions.")
-
 # ---------------------- Tabs ----------------------
-tab_home, tab_tools, tab_news, tab_threats, tab_about = st.tabs(
-    ["🏠 Home", "🧰 Tools", "📰 Publish News", "📡 Threat Feeds", "ℹ️ About"]
-)
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "🔢 Base64 Encode/Decode",
+    "🔐 Hash Generator",
+    "💣 XOR Encrypt/Decrypt",
+    "🔍 Extractor",
+    "📅 Epoch Converter"
+])
 
-# ---------------------- Home Tab ----------------------
-with tab_home:
-    st.subheader("👋 Welcome")
-    st.info("Explore the latest cybersecurity resources, tools, and community updates.")
-    st.success("💡 Use the tabs above to navigate through the portal features.")
+# ---------------------- Base64 Encode/Decode ----------------------
+with tab1:
+    st.header("🔢 Base64 Encoder / Decoder")
+    b64_mode = st.radio("Select Mode", ["Encode", "Decode"])
+    b64_input = st.text_area("Enter Text")
 
-# ---------------------- Tools Tab ----------------------
-with tab_tools:
-    st.subheader("🧰 Open Source Intelligence Tools")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.write("### 🔍 Domain Lookup")
-        domain = st.text_input("Enter a domain (e.g., example.com)")
-        if st.button("Scan Domain"):
-            if domain:
-                st.info(f"Scanned domain: {domain}")
-                st.code("✅ No threats detected in current database.")
+    if st.button("Run Base64"):
+        try:
+            if b64_mode == "Encode":
+                encoded = base64.b64encode(b64_input.encode()).decode()
+                st.code(encoded)
             else:
-                st.warning("⚠️ Please enter a domain name.")
+                decoded = base64.b64decode(b64_input).decode()
+                st.code(decoded)
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
 
-    with col2:
-        st.write("### 💣 Malware Hash Checker")
-        hash_input = st.text_input("Enter file hash (e.g., SHA256)")
-        if st.button("Check Hash"):
-            if hash_input:
-                st.warning("⚠️ This hash appears in public threat intel sources.")
-            else:
-                st.warning("⚠️ Please enter a file hash.")
+# ---------------------- Hash Generator ----------------------
+with tab2:
+    st.header("🔐 Hash Generator (MD5, SHA1, SHA256)")
+    text_to_hash = st.text_input("Enter text to hash")
 
-# ---------------------- Publish News Tab ----------------------
-with tab_news:
-    st.subheader("📰 Publish Cybersecurity News")
+    if st.button("Generate Hashes"):
+        st.code(f"MD5    : {hashlib.md5(text_to_hash.encode()).hexdigest()}")
+        st.code(f"SHA1   : {hashlib.sha1(text_to_hash.encode()).hexdigest()}")
+        st.code(f"SHA256 : {hashlib.sha256(text_to_hash.encode()).hexdigest()}")
 
-    with st.form("news_form", clear_on_submit=True):
-        title = st.text_input("News Title")
-        author = st.text_input("Your Name or Alias")
-        content = st.text_area("News Content")
-        date = datetime.now().strftime("%Y-%m-%d %H:%M")
+# ---------------------- XOR Encrypt/Decrypt ----------------------
+with tab3:
+    st.header("💣 XOR Encrypt / Decrypt")
+    xor_text = st.text_area("Input text")
+    xor_key = st.text_input("Key (1 character or more)")
 
-        submitted = st.form_submit_button("Publish")
-        if submitted:
-            if title and content:
-                st.session_state["news_posts"].append({
-                    "title": title,
-                    "author": author or "Anonymous",
-                    "content": content,
-                    "date": date
-                })
-                st.success("✅ News published successfully!")
-            else:
-                st.error("❌ Title and content are required.")
+    def xor_encrypt(text, key):
+        return ''.join([chr(ord(c) ^ ord(key[i % len(key)])) for i, c in enumerate(text)])
 
-    # Display published posts
-    if st.session_state["news_posts"]:
-        st.markdown("---")
-        st.markdown("### 🗞️ Published News")
-        for post in reversed(st.session_state["news_posts"]):
-            st.markdown(f"#### {post['title']}")
-            st.markdown(f"**By:** {post['author']} &nbsp;&nbsp;|&nbsp;&nbsp; 📅 {post['date']}")
-            st.markdown(post['content'])
-            st.markdown("---")
+    if st.button("Run XOR"):
+        try:
+            result = xor_encrypt(xor_text, xor_key)
+            st.text("Result (may contain special chars):")
+            st.code(result)
+        except Exception as e:
+            st.error(f"Error: {str(e)}")
 
-# ---------------------- Threat Feeds Tab ----------------------
-with tab_threats:
-    st.subheader("📡 Live Threat Feeds (Demo)")
-    st.info("Sample threat indicators — future versions will pull from real APIs.")
-    st.table({
-        "Type": ["Phishing Domain", "Malicious IP", "APK Hash"],
-        "Value": ["login-fb-check.com", "185.220.101.34", "f83a5b9..."],
-        "Source": ["Community Report", "Abuse.ch", "VirusTotal"]
-    })
+# ---------------------- Extractor ----------------------
+with tab4:
+    st.header("🔍 Extract Emails, IPs, URLs")
+    raw_input = st.text_area("Paste raw log or text")
 
-# ---------------------- About Tab ----------------------
-with tab_about:
-    st.subheader("ℹ️ About This Portal")
-    st.markdown("""
-    This community-driven platform supports cybersecurity awareness, tools, and threat sharing.
+    if st.button("Extract Now"):
+        emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", raw_input)
+        ips = re.findall(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", raw_input)
+        urls = re.findall(r"https?://[^\s]+", raw_input)
 
-    ### 🔍 Features:
-    - Domain and Hash lookup tools
-    - News publishing form
-    - Threat feed demos
-    - Stylish, mobile-friendly UI
+        st.write("📧 Emails:")
+        st.code('\n'.join(emails) if emails else "None found")
 
-    Maintained by: `@yourusername`  
-    GitHub Repo: [https://github.com/yourusername/cybersec-portal](https://github.com/yourusername/cybersec-portal)
-    """)
+        st.write("🌐 IPs:")
+        st.code('\n'.join(ips) if ips else "None found")
+
+        st.write("🔗 URLs:")
+        st.code('\n'.join(urls) if urls else "None found")
+
+# ---------------------- Epoch Converter ----------------------
+with tab5:
+    st.header("📅 Epoch Timestamp Converter")
+    epoch_input = st.text_input("Enter UNIX timestamp (e.g., 1714788352)")
+
+    if st.button("Convert Timestamp"):
+        try:
+            dt = datetime.fromtimestamp(int(epoch_input))
+            st.success(f"Human-readable: {dt.strftime('%Y-%m-%d %H:%M:%S')}")
+        except:
+            st.error("Invalid timestamp.")
 
 # ---------------------- Footer ----------------------
 st.markdown("---")
-st.markdown("© 2025 | CyberSec Portal | Built with ❤️ using Streamlit")
+st.markdown("© 2025 | Cyber Tools Lab | Inspired by CyberChef")
